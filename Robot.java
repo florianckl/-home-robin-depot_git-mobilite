@@ -1,4 +1,4 @@
-package wrsn;
+
 
 import java.util.LinkedList;
 import java.util.List;
@@ -52,10 +52,10 @@ public class Robot extends WaypointNode {
 		}
 	}
 
-	@Override
-	public void onClock() {
-		if (sens != null && this.distance(sens) < getSensingRange()) {
-			sens.battery = 255;
+	public void onSensingOut(Node node) {
+		if (node instanceof Sensor) {
+			sens = (Sensor) node;
+			((Sensor) node).battery = 255;
 		}
 	}
 

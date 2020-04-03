@@ -1,4 +1,3 @@
-package wrsn;
 
 public class MemoireMaxNbNoeud {
 

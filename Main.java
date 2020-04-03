@@ -1,5 +1,3 @@
-package wrsn;
-
 import io.jbotsim.core.LinkResolver;
 import io.jbotsim.core.Node;
 import io.jbotsim.core.Topology;

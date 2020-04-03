@@ -1,5 +1,3 @@
-package wrsn;
-
 import io.jbotsim.core.Color;
 import io.jbotsim.core.Message;
 import io.jbotsim.core.Node;
@@ -24,6 +22,9 @@ public class Sensor extends Node {
 		// "SENSING" flag : transmission of the sensed values
 		// You can use other flags for your algorithms
 
+		if (message.getFlag().equals("location")) {
+			send(parent, new Message(message.getContent(),"location"));
+		}
 		if (message.getFlag().equals("idZone")) {
 			idZone = 0;
 			for (Node n : this.getNeighbors()) {
@@ -67,12 +68,12 @@ public class Sensor extends Node {
 			}
 		}
 		if (message.getFlag().equals("INIT"))
-
 		{
 			// if not yet in the tree
 			if (parent == null) {
 				// enter the tree
 				parent = message.getSender();
+				send(parent, new Message(this.getLocation(),"location"));
 				getCommonLinkWith(parent).setWidth(4);
 				// propagate further
 				sendAll(message);

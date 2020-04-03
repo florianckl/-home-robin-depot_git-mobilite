@@ -1,12 +1,9 @@
-package wrsn;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 import io.jbotsim.core.Link;
 import io.jbotsim.core.Message;
 import io.jbotsim.core.Node;
+import io.jbotsim.core.Point;
 import io.jbotsim.ui.icons.Icons;
 
 public class BaseStation extends Node {
@@ -39,6 +36,8 @@ public class BaseStation extends Node {
 		sendAll(new Message(null, "INIT"));
 	}
 
+	ArrayList<Point> locations = new ArrayList<>();
+	ArrayList<Double> distances = new ArrayList<Double>();
 	List<MemoireBattery> destinations;
 	Queue<MemoireBattery> destinations0 = new LinkedList<>();
 	Queue<MemoireBattery> destinations1 = new LinkedList<>();
@@ -46,6 +45,14 @@ public class BaseStation extends Node {
 
 	@Override
 	public void onMessage(Message message) {
+
+		if(message.getFlag().equals("location"))
+		{
+			Point point = (Point)message.getContent();
+			locations.add(point);
+			distances.add(point.distance(this.getLocation()));
+			System.out.println("Je suis le point de coordonnees " + point.getX() + " " + point.getY() + "et je suis ajoute a la liste");
+		}
 		if (message.getFlag().equals("idNbSuccesseur")) {
 			if (maxNoeudSuccesseur < (int) message.getContent()) {
 				maxNoeudSuccesseur = (int) message.getContent();
@@ -72,12 +79,20 @@ public class BaseStation extends Node {
 		}
 
 		if (message.getFlag().equals("mem")) {
-			if (((MemoireBattery) message.getContent()).getZone() == 0) {
+			MemoireBattery memSensor = (MemoireBattery)message.getContent();
+			//System.out.println("le message est envoye depuis une distance de " + memSensor.getPt().distance(this.getLocation()));
+			if(memSensor.getPt().distance(this.getLocation())<getMedianDistance()) {
 				destinations0.add((MemoireBattery) message.getContent());
 			}
-			if (((MemoireBattery) message.getContent()).getZone() == 1) {
+			else{
 				destinations1.add((MemoireBattery) message.getContent());
 			}
+			//if (((MemoireBattery) message.getContent()).getZone() == 0) {
+			//	destinations0.add((MemoireBattery) message.getContent());
+			//}
+			//if (((MemoireBattery) message.getContent()).getZone() == 1) {
+			//	destinations1.add((MemoireBattery) message.getContent());
+			//}
 		}
 	}
 
@@ -114,4 +129,39 @@ public class BaseStation extends Node {
 			}
 		}
 	}
+
+	private Double getMaxDistance(){
+
+		double max = 0;
+		for (double d : distances){
+			if (d > max){
+				max = d;
+			}
+		}
+		return max;
+	}
+
+	private Double getAverageDistance(){
+
+		double sum = 0;
+		int len = distances.size();
+		for(double d : distances){
+			sum = sum + d;
+		}
+		return sum/len;
+	}
+
+	private Double getMedianDistance(){
+
+		int len = distances.size();
+		Collections.sort(distances);
+		if(len % 2 == 1) {
+			return distances.get(len / 2);
+		}
+		else{
+			return ( distances.get((len / 2) - 1) + distances.get(len / 2) ) / 2;
+		}
+	}
+
 }
+

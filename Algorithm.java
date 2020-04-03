@@ -1,5 +1,3 @@
-package wrsn;
-
 import java.util.List;
 import java.util.Queue;
 

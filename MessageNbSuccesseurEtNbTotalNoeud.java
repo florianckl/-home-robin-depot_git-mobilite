@@ -1,5 +1,3 @@
-package wrsn;
-
 public class MessageNbSuccesseurEtNbTotalNoeud {
 
 	private int nbSuccesseur;
