@@ -19,6 +19,7 @@ public class Robot extends WaypointNode {
 		this.baseStation = baseStation;
 		this.idZone = idZone;
 		i = 0;
+		this.setSpeed(this.speed*5);
 	}
 
 	public int getIdZone() {

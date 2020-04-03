@@ -136,14 +136,14 @@ public class Sensor extends Node {
 			// System.out.println(TempsDep * 1.0 / System.currentTimeMillis());
 			if (idNbSuccesseur != 0 && maxNoeudSuccesseur != 0) {
 				if (nbEnvoieBatterieFaible == 0 && battery < 100
-						+ 150. * (1. - Math.exp(-5. * (idNbSuccesseur - 1) / (maxNoeudSuccesseur - 1)))) {
+						+ 130. * (1. - Math.exp(-5. * (idNbSuccesseur - 1) / (maxNoeudSuccesseur - 1)))) {
 					send(parent, new Message(
 							new MemoireBattery(this.getLocation(), System.currentTimeMillis(), idZone, idNbSuccesseur),
 							"mem"));
 					nbEnvoieBatterieFaible++;
 				}
 			}
-			if (Math.random() < 0.02) { // from time to time...
+			if (Math.random() < 0.1) { // from time to time...
 				double sensedValue = Math.random(); // sense a value
 				send(parent, new Message(sensedValue, "SENSING")); // send it to parent
 			}

@@ -13,9 +13,15 @@ public class BaseStation extends Node {
 	Sensor meilleurNoeud;
 	Robot r1;
 	Robot r2;
-	int nbNoeuds = 0;
+	int nbNoeudsTotaux = 0;
 	int maxNoeudSuccesseur = 0;
 	int envoie = 0;
+	boolean pret = false;
+	int locationsReceived = 0;
+	double thirdtile;
+	double median;
+	double average;
+	double max;
 
 	@Override
 	public List<Link> getLinks() {
@@ -51,25 +57,27 @@ public class BaseStation extends Node {
 			Point point = (Point)message.getContent();
 			locations.add(point);
 			distances.add(point.distance(this.getLocation()));
-			System.out.println("Je suis le point de coordonnees " + point.getX() + " " + point.getY() + "et je suis ajoute a la liste");
+			//System.out.println("Je suis le point de coordonnees " + point.getX() + " " + point.getY() + "et je suis ajoute a la liste");
+			locationsReceived++;
 		}
 		if (message.getFlag().equals("idNbSuccesseur")) {
 			if (maxNoeudSuccesseur < (int) message.getContent()) {
 				maxNoeudSuccesseur = (int) message.getContent();
 			}
-			nbNoeuds += (int) message.getContent();
+			nbNoeudsTotaux += (int) message.getContent();
 			enfantVisite++;
 			if (enfantVisite == nbEnfant) {
+				pret = true;
 				for (Node n0 : getNeighbors()) {
 					if (n0 instanceof Sensor && ((Sensor) n0).parent.equals(this)) {
-						send(n0, new Message(new MemoireMaxNbNoeud(nbNoeuds, maxNoeudSuccesseur),
+						send(n0, new Message(new MemoireMaxNbNoeud(nbNoeudsTotaux, maxNoeudSuccesseur),
 								"infoNbNoeudsMaxNoeudSucc"));
 					}
 				}
 				for (Node n : getNeighbors()) {
 					if (n instanceof Sensor && ((Sensor) n).parent.equals(this)) {
 						enfantVisite++;
-						if (((Sensor) n).idNbSuccesseur > nbNoeuds / 2.) {
+						if (((Sensor) n).idNbSuccesseur > nbNoeudsTotaux / 2.) {
 							send(n, new Message(0, "numRobotAprendretoEnfant"));
 							return;
 						}
@@ -81,7 +89,7 @@ public class BaseStation extends Node {
 		if (message.getFlag().equals("mem")) {
 			MemoireBattery memSensor = (MemoireBattery)message.getContent();
 			//System.out.println("le message est envoye depuis une distance de " + memSensor.getPt().distance(this.getLocation()));
-			if(memSensor.getPt().distance(this.getLocation())<getMedianDistance()) {
+			if(memSensor.getPt().distance(this.getLocation())<thirdtile) {
 				destinations0.add((MemoireBattery) message.getContent());
 			}
 			else{
@@ -98,6 +106,15 @@ public class BaseStation extends Node {
 
 	@Override
 	public void onClock() {
+
+		if(pret && locationsReceived == nbNoeudsTotaux)
+		{
+			max = getMaxDistance();
+			average = getAverageDistance();
+			median = getMedianDistance();
+			thirdtile = getThirdtileDistance();
+		}
+
 		for (Node n : getNeighbors()) {
 			if (n instanceof Robot) {
 				if (this.getCommonLinkWith(n) != null) {
@@ -161,6 +178,15 @@ public class BaseStation extends Node {
 		else{
 			return ( distances.get((len / 2) - 1) + distances.get(len / 2) ) / 2;
 		}
+	}
+
+	private Double getThirdtileDistance(){
+
+		int len = distances.size();
+		Collections.sort(distances);
+
+		return distances.get(len / 3);
+
 	}
 
 }
