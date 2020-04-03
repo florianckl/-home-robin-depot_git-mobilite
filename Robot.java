@@ -13,6 +13,7 @@ public class Robot extends WaypointNode {
 	private int i;
 	private int idZone;
 	BaseStation baseStation;
+	Sensor sens = null;
 
 	public Robot(BaseStation baseStation, int idZone) {
 		this.baseStation = baseStation;
@@ -46,7 +47,15 @@ public class Robot extends WaypointNode {
 		if (node instanceof Sensor) {
 			this.getItineraire().remove(node.getLocation());
 			retourBase();
+			sens = (Sensor) node;
 			((Sensor) node).battery = 255;
+		}
+	}
+
+	@Override
+	public void onClock() {
+		if (sens != null && this.distance(sens) < getSensingRange()) {
+			sens.battery = 255;
 		}
 	}
 
