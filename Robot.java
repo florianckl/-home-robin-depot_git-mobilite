@@ -10,13 +10,18 @@ import io.jbotsim.core.Point;
 import io.jbotsim.ui.icons.Icons;
 
 public class Robot extends WaypointNode {
-	int i = 0;
-	int id;
+	private int i;
+	private int idZone;
 	BaseStation baseStation;
 
-	public Robot(BaseStation baseStation, int id) {
+	public Robot(BaseStation baseStation, int idZone) {
 		this.baseStation = baseStation;
-		this.id = id;
+		this.idZone = idZone;
+		i = 0;
+	}
+
+	public int getIdZone() {
+		return idZone;
 	}
 
 	@Override
@@ -40,9 +45,6 @@ public class Robot extends WaypointNode {
 	public void onSensingIn(Node node) {
 		if (node instanceof Sensor) {
 			this.getItineraire().remove(node.getLocation());
-			((Sensor) node).passage++;
-
-			((Sensor) node).setLabel(((Sensor) node).idNbSuccesseur + " " + ((Sensor) node).passage);
 			retourBase();
 			((Sensor) node).battery = 255;
 		}
@@ -50,11 +52,11 @@ public class Robot extends WaypointNode {
 
 	@Override
 	public void onLinkAdded(Link link) {
-		this.setLabel(id);
+		this.setLabel(idZone);
 		for (Node n : getNeighbors()) {
 			if (n instanceof Robot) {
 				if (getCommonLinkWith(n) != null) {
-					if (this.id == 1) {
+					if (this.idZone == 1) {
 
 						if (this.getItineraireSecondaire().size() > 0) {
 							if (((Robot) n).getItineraire().peek() != null

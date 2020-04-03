@@ -14,10 +14,11 @@ public class BaseStation extends Node {
 	int nbEnfant = 0;
 	int enfantVisite = 0;
 	Sensor meilleurNoeud;
-	int difference = 1000000;
 	Robot r1;
 	Robot r2;
 	int nbNoeuds = 0;
+	int maxNoeudSuccesseur = 0;
+	int envoie = 0;
 
 	@Override
 	public List<Link> getLinks() {
@@ -46,27 +47,27 @@ public class BaseStation extends Node {
 	@Override
 	public void onMessage(Message message) {
 		if (message.getFlag().equals("idNbSuccesseur")) {
+			if (maxNoeudSuccesseur < (int) message.getContent()) {
+				maxNoeudSuccesseur = (int) message.getContent();
+			}
 			nbNoeuds += (int) message.getContent();
 			enfantVisite++;
 			if (enfantVisite == nbEnfant) {
+				for (Node n0 : getNeighbors()) {
+					if (n0 instanceof Sensor && ((Sensor) n0).parent.equals(this)) {
+						send(n0, new Message(new MemoireMaxNbNoeud(nbNoeuds, maxNoeudSuccesseur),
+								"infoNbNoeudsMaxNoeudSucc"));
+					}
+				}
 				for (Node n : getNeighbors()) {
 					if (n instanceof Sensor && ((Sensor) n).parent.equals(this)) {
-						send(n, new Message(nbNoeuds, "numRobottoChildren"));
+						enfantVisite++;
+						if (((Sensor) n).idNbSuccesseur > nbNoeuds / 2.) {
+							send(n, new Message(0, "numRobotAprendretoEnfant"));
+							return;
+						}
 					}
-
 				}
-			}
-
-		}
-		if (message.getFlag().equals("numRobotFromChildren")) {
-			nbEnfant--;
-			if (0 < (int) message.getContent() - nbNoeuds / 2.
-					&& (int) message.getContent() - nbNoeuds / 2. < difference) {
-				difference = (int) message.getContent() - nbNoeuds / 2;
-				meilleurNoeud = (Sensor) message.getSender();
-			}
-			if (nbEnfant == 0) {
-				send(meilleurNoeud, new Message(difference, "numRobotAprendretoEnfant"));
 			}
 		}
 
@@ -82,19 +83,19 @@ public class BaseStation extends Node {
 
 	@Override
 	public void onClock() {
-
 		for (Node n : getNeighbors()) {
 			if (n instanceof Robot) {
 				if (this.getCommonLinkWith(n) != null) {
+					((Robot) n).getItineraire().remove(this.getLocation());
 					destinations = new LinkedList<>();
-					if (((Robot) n).id == 1 && !destinations1.isEmpty()) {// || !destinations0.isEmpty())) {
+					if (((Robot) n).getIdZone() == 1 && !destinations1.isEmpty()) {
 						destinations.clear();
 						destinations.addAll(destinations1);
 						destinations1 = new LinkedList<>();
 						Algorithm algo = new Algorithm((Robot) n, destinations);
 						((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
 					}
-					if (((Robot) n).id == 1 && !destinations0.isEmpty()) {
+					if (((Robot) n).getIdZone() == 1 && !destinations0.isEmpty()) {
 						destinations.addAll(destinations0);
 						destinations0 = new LinkedList<>();
 						for (MemoireBattery mem : destinations) {
@@ -102,7 +103,7 @@ public class BaseStation extends Node {
 						}
 					}
 
-					if (((Robot) n).id == 0 && !destinations0.isEmpty()) {
+					if (((Robot) n).getIdZone() == 0 && !destinations0.isEmpty()) {
 						destinations.addAll(destinations0);
 						destinations0 = new LinkedList<>();
 						Algorithm algo = new Algorithm((Robot) n, destinations);

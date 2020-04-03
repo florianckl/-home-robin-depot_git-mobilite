@@ -37,6 +37,7 @@ public class Algorithm {
 		int procheVoisin = 0;
 		for (int i = 0; i < listePoint.size(); i++) {
 			double distance = p.distance(listePoint.get(i).getPt());
+			// (System.currentTimeMillis() - listePoint.get(i).getTime());
 			if (distance < distanceMin) {
 				distanceMin = distance;
 				procheVoisin = i;
