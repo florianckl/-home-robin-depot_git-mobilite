@@ -1,5 +1,3 @@
-package wrsn;
-
 import io.jbotsim.core.Point;
 
 public class MemoireBattery {

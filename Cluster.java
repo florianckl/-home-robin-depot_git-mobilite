@@ -1,5 +1,3 @@
-package wrsn;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -37,6 +35,14 @@ public class Cluster {
 			} else {
 				t2.add(pt);
 			}
+		}
+		if (t2.isEmpty()) {
+			t2.add(new Point(100, 80));
+
+		}
+		if (t1.isEmpty()) {
+			t1.add(new Point(100, 80));
+
 		}
 		int longueur = t1.size();
 		for (int i = 0; i < longueur; i++) {
@@ -76,7 +82,7 @@ public class Cluster {
 		int j = 0;
 		int max1 = 0;
 		int max2 = 0;
-		while (j < 6) {
+		while (j < 3) {
 			Point p1Bis = new Point(0, 0);
 			Point p2Bis = new Point(0, 0);
 			max1 = 0;

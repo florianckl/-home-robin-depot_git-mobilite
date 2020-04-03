@@ -1,5 +1,3 @@
-package wrsn;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -72,12 +70,7 @@ public class BaseStation extends Node {
 		}
 
 		if (message.getFlag().equals("mem")) {
-			if (((MemoireBattery) message.getContent()).getZone() == 0) {
-				destinations0.add((MemoireBattery) message.getContent());
-			}
-			if (((MemoireBattery) message.getContent()).getZone() == 1) {
-				destinations1.add((MemoireBattery) message.getContent());
-			}
+			destinations0.add((MemoireBattery) message.getContent());
 		}
 	}
 
@@ -88,27 +81,11 @@ public class BaseStation extends Node {
 				if (this.getCommonLinkWith(n) != null) {
 					((Robot) n).getItineraire().remove(this.getLocation());
 					destinations = new LinkedList<>();
-					if (((Robot) n).getIdZone() == 1 && !destinations1.isEmpty()) {
-						destinations.clear();
-						destinations.addAll(destinations1);
-						destinations1 = new LinkedList<>();
-						Algorithm algo = new Algorithm((Robot) n, destinations);
-						((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
-					}
-					if (((Robot) n).getIdZone() == 1 && !destinations0.isEmpty()) {
-						destinations.addAll(destinations0);
-						destinations0 = new LinkedList<>();
-						for (MemoireBattery mem : destinations) {
-							((Robot) n).getItineraireSecondaire().add(mem.getPt());
-						}
-					}
-
-					if (((Robot) n).getIdZone() == 0 && !destinations0.isEmpty()) {
+					if (!destinations0.isEmpty()) {
 						destinations.addAll(destinations0);
 						destinations0 = new LinkedList<>();
 						Algorithm algo = new Algorithm((Robot) n, destinations);
 						((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
-
 					}
 				}
 			}

@@ -1,7 +1,5 @@
-package wrsn;
-
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Queue;
 
 import io.jbotsim.core.Link;
 import io.jbotsim.core.Message;
@@ -13,7 +11,6 @@ public class Robot extends WaypointNode {
 	private int i;
 	private int idZone;
 	BaseStation baseStation;
-	Sensor sens = null;
 
 	public Robot(BaseStation baseStation, int idZone) {
 		this.baseStation = baseStation;
@@ -47,40 +44,31 @@ public class Robot extends WaypointNode {
 		if (node instanceof Sensor) {
 			this.getItineraire().remove(node.getLocation());
 			retourBase();
-			sens = (Sensor) node;
 			((Sensor) node).battery = 255;
 		}
 	}
 
 	@Override
-	public void onClock() {
-		if (sens != null && this.distance(sens) < getSensingRange()) {
-			sens.battery = 255;
+	public void onSensingOut(Node node) {
+		if (node instanceof Sensor) {
+			((Sensor) node).battery = 255;
 		}
 	}
 
 	@Override
 	public void onLinkAdded(Link link) {
-		this.setLabel(idZone);
-		for (Node n : getNeighbors()) {
-			if (n instanceof Robot) {
-				if (getCommonLinkWith(n) != null) {
-					if (this.idZone == 1) {
-
-						if (this.getItineraireSecondaire().size() > 0) {
-							if (((Robot) n).getItineraire().peek() != null
-									&& ((Robot) n).getItineraire().peek().equals(baseStation.getLocation())) {
-								((Robot) n).getItineraire().remove(baseStation.getLocation());
-							}
-							List<MemoireBattery> dest = new LinkedList<>();
-							for (Point pt : this.getItineraireSecondaire()) {
-								dest.add(new MemoireBattery(pt, 0, 0, 0));
-							}
-							Algorithm algo = new Algorithm((Robot) n, dest);
-							((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
-							this.getItineraireSecondaire().clear();
-						}
-					}
+		for (Node node : this.getNeighbors()) {
+			if (node instanceof Robot) {
+				Queue<Point> merge = new LinkedList();
+				Queue<Point> tab1 = new LinkedList();
+				Queue<Point> tab2 = new LinkedList();
+				merge.addAll(this.getItineraire());
+				merge.addAll(((Robot) node).getItineraire());
+				if (!merge.isEmpty()) {
+					Cluster c = new Cluster(merge, tab1, tab2);
+					c.creation(this.getLocation(), node.getLocation());
+					this.setItineraire(tab1);
+					((Robot) node).setItineraire(tab2);
 				}
 			}
 		}
