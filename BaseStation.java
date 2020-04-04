@@ -23,7 +23,9 @@ public class BaseStation extends Node {
 	double median;
 	double average;
 	double max;
+	double tempsDep;
 	boolean Stop = false;
+	int nbRobot = 0;
 
 	@Override
 	public List<Link> getLinks() {
@@ -33,14 +35,14 @@ public class BaseStation extends Node {
 
 	@Override
 	public void onStart() {
+		// tempsDep = System.currentTimeMillis();
 		setIcon(Icons.STATION);
 		setIconSize(16);
-		int i = 0;
 		for (Node n : this.getNeighbors()) {
 			if (n instanceof Robot) {
 				((Robot) n).setBaseStation(this);
-				((Robot) n).setIdZone(i);
-				i++;
+				((Robot) n).setIdZone(nbRobot);
+				nbRobot++;
 			}
 		}
 		for (Node n : this.getNeighbors()) {
@@ -68,8 +70,6 @@ public class BaseStation extends Node {
 			Point point = (Point) message.getContent();
 			locations.add(point);
 			distances.add(point.distance(this.getLocation()));
-			// System.out.println("Je suis le point de coordonnees " + point.getX() + " " +
-			// point.getY() + "et je suis ajoute a la liste");
 			locationsReceived++;
 		}
 		if (message.getFlag().equals("nbSuccesseurs")) {// permet de connaitre le nombre de noeuds dans le graphe
@@ -91,9 +91,7 @@ public class BaseStation extends Node {
 
 		if (message.getFlag().equals("mem")) {
 			Point memSensor = (Point) message.getContent();
-			// System.out.println("le message est envoye depuis une distance de " +
-			// memSensor.distance(this.getLocation()));
-			if (memSensor.distance(this.getLocation()) < getQuardtileDistance()) {
+			if (memSensor.distance(this.getLocation()) < getMaxDistance() / 3) {
 				destinations0.add((Point) message.getContent());
 			} else {
 				destinations1.add((Point) message.getContent());
@@ -104,16 +102,21 @@ public class BaseStation extends Node {
 	@Override
 	public void onClock() {
 		if (Stop) {
-			double rechageTotal = 0;
+			int i = 0;
+			double rechargeTotal = 0;
 			for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
 				if (n instanceof Robot) {
 					if (this.getCommonLinkWith(n) != null) {
-						rechageTotal += ((Robot) n).recharge / (255. * nbNoeudsTotaux);
+						rechargeTotal += ((Robot) n).recharge / (255. * nbNoeudsTotaux);
+						i++;
 					}
 				}
 			}
-			System.out.println(rechageTotal);
-			// System.exit(0);
+			if (i == nbRobot) {
+				// System.out.println((System.currentTimeMillis() - tempsDep) / 1000);
+				System.out.println(rechargeTotal);
+				System.exit(0);
+			}
 		} else {
 			if (pret && locationsReceived == nbNoeudsTotaux) {
 				max = getMaxDistance();

@@ -52,6 +52,7 @@ public class Robot extends WaypointNode {
 	@Override
 	public void onSensingOut(Node node) {
 		if (node instanceof Sensor) {
+			recharge += 255 - ((Sensor) node).battery;
 			((Sensor) node).battery = 255;
 		}
 	}

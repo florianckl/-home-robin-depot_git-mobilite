@@ -19,7 +19,7 @@ public class Main {
 				}
 			}
 		});
-
+		tp.setTimeUnit(0);
 		// Add sensors
 		tp.setDefaultNodeModel(Sensor.class);
 		String filename = "./sensors.tp"; // to be adapted
