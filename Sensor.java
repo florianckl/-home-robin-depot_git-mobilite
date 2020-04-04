@@ -21,7 +21,9 @@ public class Sensor extends Node {
 		// "INIT" flag : construction of the spanning tree
 		// "SENSING" flag : transmission of the sensed values
 		// You can use other flags for your algorithms
-
+		if (message.getFlag().equals("erreur")) {
+			send(parent, new Message(message.getContent(),"erreur"));
+		}
 		if (message.getFlag().equals("location")) {
 			send(parent, new Message(message.getContent(),"location"));
 		}
@@ -143,7 +145,7 @@ public class Sensor extends Node {
 					nbEnvoieBatterieFaible++;
 				}
 			}
-			if (Math.random() < 0.1) { // from time to time...
+			if (Math.random() < 0.03) { // from time to time...
 				double sensedValue = Math.random(); // sense a value
 				send(parent, new Message(sensedValue, "SENSING")); // send it to parent
 			}
@@ -151,6 +153,10 @@ public class Sensor extends Node {
 	}
 
 	protected void updateColor() {
+
 		setColor(battery == 0 ? Color.red : new Color(255 - battery, 255 - battery, 255));
+		if(battery<=0){
+			super.send(parent, new Message("","erreur"));
+		}
 	}
 }

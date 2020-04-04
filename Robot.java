@@ -14,12 +14,12 @@ public class Robot extends WaypointNode {
 	private int idZone;
 	BaseStation baseStation;
 	Sensor sens = null;
+	int recharge = 0;
 
 	public Robot(BaseStation baseStation, int idZone) {
 		this.baseStation = baseStation;
 		this.idZone = idZone;
 		i = 0;
-		this.setSpeed(this.speed*5);
 	}
 
 	public int getIdZone() {
@@ -49,13 +49,16 @@ public class Robot extends WaypointNode {
 			this.getItineraire().remove(node.getLocation());
 			retourBase();
 			sens = (Sensor) node;
+			recharge += 255 - ((Sensor) node).battery;
 			((Sensor) node).battery = 255;
+
 		}
 	}
 
 	public void onSensingOut(Node node) {
 		if (node instanceof Sensor) {
 			sens = (Sensor) node;
+			recharge += 255 - ((Sensor) node).battery;
 			((Sensor) node).battery = 255;
 		}
 	}
@@ -74,8 +77,8 @@ public class Robot extends WaypointNode {
 								((Robot) n).getItineraire().remove(baseStation.getLocation());
 							}
 							List<MemoireBattery> dest = new LinkedList<>();
-							for (Point pt : this.getItineraireSecondaire()) {
-								dest.add(new MemoireBattery(pt, 0, 0, 0));
+							for (MemoireBattery m : this.getItineraireSecondaire()) {
+								dest.add(m);
 							}
 							Algorithm algo = new Algorithm((Robot) n, dest);
 							((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));

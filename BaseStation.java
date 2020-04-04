@@ -18,10 +18,13 @@ public class BaseStation extends Node {
 	int envoie = 0;
 	boolean pret = false;
 	int locationsReceived = 0;
+	double quartile;
 	double thirdtile;
 	double median;
 	double average;
 	double max;
+	boolean stop = false;
+
 
 	@Override
 	public List<Link> getLinks() {
@@ -52,6 +55,9 @@ public class BaseStation extends Node {
 	@Override
 	public void onMessage(Message message) {
 
+		if(message.getFlag().equals("erreur")){
+			stop = true;
+		}
 		if(message.getFlag().equals("location"))
 		{
 			Point point = (Point)message.getContent();
@@ -89,7 +95,7 @@ public class BaseStation extends Node {
 		if (message.getFlag().equals("mem")) {
 			MemoireBattery memSensor = (MemoireBattery)message.getContent();
 			//System.out.println("le message est envoye depuis une distance de " + memSensor.getPt().distance(this.getLocation()));
-			if(memSensor.getPt().distance(this.getLocation())<thirdtile) {
+			if(memSensor.getPt().distance(this.getLocation())<quartile) {
 				destinations0.add((MemoireBattery) message.getContent());
 			}
 			else{
@@ -107,12 +113,12 @@ public class BaseStation extends Node {
 	@Override
 	public void onClock() {
 
-		if(pret && locationsReceived == nbNoeudsTotaux)
-		{
+		if (pret && locationsReceived == nbNoeudsTotaux) {
 			max = getMaxDistance();
 			average = getAverageDistance();
 			median = getMedianDistance();
 			thirdtile = getThirdtileDistance();
+			quartile = getQuartileDistance();
 		}
 
 		for (Node n : getNeighbors()) {
@@ -131,7 +137,7 @@ public class BaseStation extends Node {
 						destinations.addAll(destinations0);
 						destinations0 = new LinkedList<>();
 						for (MemoireBattery mem : destinations) {
-							((Robot) n).getItineraireSecondaire().add(mem.getPt());
+							((Robot) n).getItineraireSecondaire().add(mem);
 						}
 					}
 
@@ -144,6 +150,25 @@ public class BaseStation extends Node {
 					}
 				}
 			}
+		}
+		if (stop) {
+
+			double rechageTotal = 0;
+			for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
+				if (n instanceof Robot) {
+					if (this.getCommonLinkWith(n) != null) {
+						rechageTotal += ((Robot) n).recharge / (255. * nbNoeudsTotaux);
+
+					}
+				}
+
+				// System.out.println((System.currentTimeMillis() - tempsDep) / 1000);
+				System.out.println(rechageTotal);
+				System.exit(0);
+
+			}
+
+
 		}
 	}
 
@@ -186,6 +211,15 @@ public class BaseStation extends Node {
 		Collections.sort(distances);
 
 		return distances.get(len / 3);
+
+	}
+
+	private Double getQuartileDistance(){
+
+		int len = distances.size();
+		Collections.sort(distances);
+
+		return distances.get(len / 4 - 1);
 
 	}
 

@@ -31,13 +31,15 @@ public class Algorithm {
 	}
 
 	private int indexprocheVoisins(Point p, List<MemoireBattery> listePoint) {
-		double distanceMin = 1000;
+		double distanceMin = Double.POSITIVE_INFINITY;
 		int procheVoisin = 0;
 		for (int i = 0; i < listePoint.size(); i++) {
 			double distance = p.distance(listePoint.get(i).getPt());
+			int nbSucc = listePoint.get(i).getSuccesseur();
+			double distancePond = distance / (nbSucc * nbSucc);
 			// (System.currentTimeMillis() - listePoint.get(i).getTime());
-			if (distance < distanceMin) {
-				distanceMin = distance;
+			if (distancePond < distanceMin) {
+				distanceMin = distancePond;
 				procheVoisin = i;
 			}
 		}
