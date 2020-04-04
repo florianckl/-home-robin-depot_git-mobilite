@@ -23,6 +23,7 @@ public class BaseStation extends Node {
 	double median;
 	double average;
 	double max;
+	boolean Stop = false;
 
 	@Override
 	public List<Link> getLinks() {
@@ -60,7 +61,9 @@ public class BaseStation extends Node {
 
 	@Override
 	public void onMessage(Message message) {
-
+		if (message.getFlag().equals("ERREUR")) {
+			Stop = true;
+		}
 		if (message.getFlag().equals("location")) {
 			Point point = (Point) message.getContent();
 			locations.add(point);
@@ -90,56 +93,62 @@ public class BaseStation extends Node {
 			Point memSensor = (Point) message.getContent();
 			// System.out.println("le message est envoye depuis une distance de " +
 			// memSensor.distance(this.getLocation()));
-			if (memSensor.distance(this.getLocation()) < thirdtile) {
+			if (memSensor.distance(this.getLocation()) < getQuardtileDistance()) {
 				destinations0.add((Point) message.getContent());
 			} else {
 				destinations1.add((Point) message.getContent());
 			}
-			// if (((Point) message.getContent()).getZone() == 0) {
-			// destinations0.add((Point) message.getContent());
-			// }
-			// if (((Point) message.getContent()).getZone() == 1) {
-			// destinations1.add((Point) message.getContent());
-			// }
 		}
 	}
 
 	@Override
 	public void onClock() {
-
-		if (pret && locationsReceived == nbNoeudsTotaux) {
-			max = getMaxDistance();
-			average = getAverageDistance();
-			median = getMedianDistance();
-			thirdtile = getThirdtileDistance();
-		}
-
-		for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
-			if (n instanceof Robot) {
-				if (this.getCommonLinkWith(n) != null) {
-					((Robot) n).getItineraire().remove(this.getLocation());
-					destinations = new LinkedList<>();
-					if (((Robot) n).getIdZone() == 1 && !destinations1.isEmpty()) {
-						destinations.clear();
-						destinations.addAll(destinations1);
-						destinations1 = new LinkedList<>();
-						Algorithm algo = new Algorithm((Robot) n, destinations);
-						((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
+		if (Stop) {
+			double rechageTotal = 0;
+			for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
+				if (n instanceof Robot) {
+					if (this.getCommonLinkWith(n) != null) {
+						rechageTotal += ((Robot) n).recharge / (255. * nbNoeudsTotaux);
 					}
-					if (((Robot) n).getIdZone() == 1 && !destinations0.isEmpty()) {
-						destinations.addAll(destinations0);
-						destinations0 = new LinkedList<>();
-						for (Point mem : destinations) {
-							((Robot) n).getItineraireSecondaire().add(mem);
+				}
+			}
+			System.out.println(rechageTotal);
+			// System.exit(0);
+		} else {
+			if (pret && locationsReceived == nbNoeudsTotaux) {
+				max = getMaxDistance();
+				average = getAverageDistance();
+				median = getMedianDistance();
+				thirdtile = getThirdtileDistance();
+			}
+
+			for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
+				if (n instanceof Robot) {
+					if (this.getCommonLinkWith(n) != null) {
+						((Robot) n).getItineraire().remove(this.getLocation());
+						destinations = new LinkedList<>();
+						if (((Robot) n).getIdZone() == 1 && !destinations1.isEmpty()) {
+							destinations.clear();
+							destinations.addAll(destinations1);
+							destinations1 = new LinkedList<>();
+							Algorithm algo = new Algorithm((Robot) n, destinations);
+							((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
 						}
-					}
+						if (((Robot) n).getIdZone() == 1 && !destinations0.isEmpty()) {
+							destinations.addAll(destinations0);
+							destinations0 = new LinkedList<>();
+							for (Point mem : destinations) {
+								((Robot) n).getItineraireSecondaire().add(mem);
+							}
+						}
 
-					if (((Robot) n).getIdZone() == 0 && !destinations0.isEmpty()) {
-						destinations.addAll(destinations0);
-						destinations0 = new LinkedList<>();
-						Algorithm algo = new Algorithm((Robot) n, destinations);
-						((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
+						if (((Robot) n).getIdZone() == 0 && !destinations0.isEmpty()) {
+							destinations.addAll(destinations0);
+							destinations0 = new LinkedList<>();
+							Algorithm algo = new Algorithm((Robot) n, destinations);
+							((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
 
+						}
 					}
 				}
 			}
@@ -184,6 +193,15 @@ public class BaseStation extends Node {
 		Collections.sort(distances);
 
 		return distances.get(len / 3);
+
+	}
+
+	private Double getQuardtileDistance() {
+
+		int len = distances.size();
+		Collections.sort(distances);
+
+		return distances.get(len / 4 - 1);
 
 	}
 

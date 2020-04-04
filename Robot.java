@@ -1,6 +1,5 @@
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import io.jbotsim.core.Link;
 import io.jbotsim.core.Message;
@@ -11,14 +10,7 @@ import io.jbotsim.ui.icons.Icons;
 public class Robot extends WaypointNode {
 	private int idZone;
 	BaseStation baseStation;
-	private Queue<Point> itineraireSecondaire = new LinkedList<>();
-	public Queue<Point> getItineraireSecondaire() {
-		return itineraireSecondaire;
-	}
-
-	public void setItineraireSecondaire(Queue<Point> itineraireSecondaire) {
-		this.itineraireSecondaire = itineraireSecondaire;
-	}
+	int recharge = 0;
 
 	public Robot() {
 	}
@@ -50,6 +42,7 @@ public class Robot extends WaypointNode {
 	@Override
 	public void onSensingIn(Node node) {
 		if (node instanceof Sensor) {
+			recharge += 255 - ((Sensor) node).battery;
 			this.getItineraire().remove(node.getLocation());
 			retourBase();
 			((Sensor) node).battery = 255;

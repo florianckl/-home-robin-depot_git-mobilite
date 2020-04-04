@@ -21,6 +21,10 @@ public class Sensor extends Node {
 		// "SENSING" flag : transmission of the sensed values
 		// You can use other flags for your algorithms
 
+		if (message.getFlag().equals("ERREUR")) {
+			super.send(parent, new Message(message.getContent(), "ERREUR"));
+		}
+
 		if (message.getFlag().equals("location")) {
 			send(parent, new Message(message.getContent(), "location"));
 		}
@@ -70,7 +74,9 @@ public class Sensor extends Node {
 			super.send(destination, message);
 			battery--;
 			updateColor();
+
 		}
+
 	}
 
 	@Override
@@ -114,6 +120,9 @@ public class Sensor extends Node {
 	}
 
 	protected void updateColor() {
+		if (battery <= 0) {
+			super.send(parent, new Message("", "ERREUR"));
+		}
 		setColor(battery == 0 ? Color.red : new Color(255 - battery, 255 - battery, 255));
 	}
 }
