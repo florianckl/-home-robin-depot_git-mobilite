@@ -6,7 +6,6 @@ import io.jbotsim.core.Point;
 
 public class WaypointNode extends Node {
 	private Queue<Point> itineraire = new LinkedList<>();
-	private Queue<Point> itineraireSecondaire = new LinkedList<>();
 
 	public Queue<Point> getItineraire() {
 		return itineraire;
@@ -48,11 +47,4 @@ public class WaypointNode extends Node {
 		this.itineraire = itineraire;
 	}
 
-	public Queue<Point> getItineraireSecondaire() {
-		return itineraireSecondaire;
-	}
-
-	public void setItineraireSecondaire(Queue<Point> itineraireSecondaire) {
-		this.itineraireSecondaire = itineraireSecondaire;
-	}
 }
