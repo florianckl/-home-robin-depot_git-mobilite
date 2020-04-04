@@ -1,5 +1,5 @@
-package wrsn;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -7,17 +7,22 @@ import java.util.Queue;
 import io.jbotsim.core.Link;
 import io.jbotsim.core.Message;
 import io.jbotsim.core.Node;
+import io.jbotsim.core.Point;
 import io.jbotsim.ui.icons.Icons;
 
 public class BaseStation extends Node {
 
 	int nbEnfant = 0;
 	int enfantVisite = 0;
-	Sensor meilleurNoeud;
-	int difference = 1000000;
-	Robot r1;
-	Robot r2;
-	int nbNoeuds = 0;
+	int nbNoeudsTotaux = 0;
+	int maxNoeudSuccesseur = 0;
+	int envoie = 0;
+	boolean pret = false;
+	int locationsReceived = 0;
+	double thirdtile;
+	double median;
+	double average;
+	double max;
 
 	@Override
 	public List<Link> getLinks() {
@@ -29,6 +34,14 @@ public class BaseStation extends Node {
 	public void onStart() {
 		setIcon(Icons.STATION);
 		setIconSize(16);
+		int i = 0;
+		for (Node n : this.getNeighbors()) {
+			if (n instanceof Robot) {
+				((Robot) n).setBaseStation(this);
+				((Robot) n).setIdZone(i);
+				i++;
+			}
+		}
 		for (Node n : this.getNeighbors()) {
 			if (n instanceof Sensor) {
 				nbEnfant++;
@@ -38,71 +51,90 @@ public class BaseStation extends Node {
 		sendAll(new Message(null, "INIT"));
 	}
 
-	List<MemoireBattery> destinations;
-	Queue<MemoireBattery> destinations0 = new LinkedList<>();
-	Queue<MemoireBattery> destinations1 = new LinkedList<>();
-	Queue<MemoireBattery> destinations2 = new LinkedList<>();
+	ArrayList<Point> locations = new ArrayList<>();
+	ArrayList<Double> distances = new ArrayList<>();
+	List<Point> destinations;
+	Queue<Point> destinations0 = new LinkedList<>();
+	Queue<Point> destinations1 = new LinkedList<>();
+	Queue<Point> destinations2 = new LinkedList<>();
 
 	@Override
 	public void onMessage(Message message) {
-		if (message.getFlag().equals("idNbSuccesseur")) {
-			nbNoeuds += (int) message.getContent();
+
+		if (message.getFlag().equals("location")) {
+			Point point = (Point) message.getContent();
+			locations.add(point);
+			distances.add(point.distance(this.getLocation()));
+			// System.out.println("Je suis le point de coordonnees " + point.getX() + " " +
+			// point.getY() + "et je suis ajoute a la liste");
+			locationsReceived++;
+		}
+		if (message.getFlag().equals("nbSuccesseurs")) {// permet de connaitre le nombre de noeuds dans le graphe
+			if (maxNoeudSuccesseur < (int) message.getContent()) {
+				maxNoeudSuccesseur = (int) message.getContent();
+			}
+			nbNoeudsTotaux += (int) message.getContent();
 			enfantVisite++;
 			if (enfantVisite == nbEnfant) {
-				for (Node n : getNeighbors()) {
-					if (n instanceof Sensor && ((Sensor) n).parent.equals(this)) {
-						send(n, new Message(nbNoeuds, "numRobottoChildren"));
+				pret = true;
+				for (Node n0 : getNeighbors()) {
+					if (n0 instanceof Sensor && ((Sensor) n0).parent.equals(this)) {
+						send(n0, new Message(new MemoireMaxNbNoeud(nbNoeudsTotaux, maxNoeudSuccesseur),
+								"infoNbNoeudsMaxNoeudSucc"));
 					}
-
 				}
-			}
-
-		}
-		if (message.getFlag().equals("numRobotFromChildren")) {
-			nbEnfant--;
-			if (0 < (int) message.getContent() - nbNoeuds / 2.
-					&& (int) message.getContent() - nbNoeuds / 2. < difference) {
-				difference = (int) message.getContent() - nbNoeuds / 2;
-				meilleurNoeud = (Sensor) message.getSender();
-			}
-			if (nbEnfant == 0) {
-				send(meilleurNoeud, new Message(difference, "numRobotAprendretoEnfant"));
 			}
 		}
 
 		if (message.getFlag().equals("mem")) {
-			if (((MemoireBattery) message.getContent()).getZone() == 0) {
-				destinations0.add((MemoireBattery) message.getContent());
+			Point memSensor = (Point) message.getContent();
+			// System.out.println("le message est envoye depuis une distance de " +
+			// memSensor.distance(this.getLocation()));
+			if (memSensor.distance(this.getLocation()) < thirdtile) {
+				destinations0.add((Point) message.getContent());
+			} else {
+				destinations1.add((Point) message.getContent());
 			}
-			if (((MemoireBattery) message.getContent()).getZone() == 1) {
-				destinations1.add((MemoireBattery) message.getContent());
-			}
+			// if (((Point) message.getContent()).getZone() == 0) {
+			// destinations0.add((Point) message.getContent());
+			// }
+			// if (((Point) message.getContent()).getZone() == 1) {
+			// destinations1.add((Point) message.getContent());
+			// }
 		}
 	}
 
 	@Override
 	public void onClock() {
 
-		for (Node n : getNeighbors()) {
+		if (pret && locationsReceived == nbNoeudsTotaux) {
+			max = getMaxDistance();
+			average = getAverageDistance();
+			median = getMedianDistance();
+			thirdtile = getThirdtileDistance();
+		}
+
+		for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
 			if (n instanceof Robot) {
 				if (this.getCommonLinkWith(n) != null) {
+					((Robot) n).getItineraire().remove(this.getLocation());
 					destinations = new LinkedList<>();
-					if (((Robot) n).id == 1 && !destinations1.isEmpty()) {// || !destinations0.isEmpty())) {
+					if (((Robot) n).getIdZone() == 1 && !destinations1.isEmpty()) {
 						destinations.clear();
 						destinations.addAll(destinations1);
 						destinations1 = new LinkedList<>();
 						Algorithm algo = new Algorithm((Robot) n, destinations);
 						((Robot) n).setItineraire(algo.itineraireProcheVoisins(((Robot) n).getItineraire()));
 					}
-					if (((Robot) n).id == 1 && !destinations0.isEmpty()) {
+					if (((Robot) n).getIdZone() == 1 && !destinations0.isEmpty()) {
 						destinations.addAll(destinations0);
 						destinations0 = new LinkedList<>();
-						for (MemoireBattery mem : destinations) {
-							((Robot) n).getItineraireSecondaire().add(mem.getPt());
+						for (Point mem : destinations) {
+							((Robot) n).getItineraireSecondaire().add(mem);
 						}
 					}
 
-					if (((Robot) n).id == 0 && !destinations0.isEmpty()) {
+					if (((Robot) n).getIdZone() == 0 && !destinations0.isEmpty()) {
 						destinations.addAll(destinations0);
 						destinations0 = new LinkedList<>();
 						Algorithm algo = new Algorithm((Robot) n, destinations);
@@ -113,4 +145,46 @@ public class BaseStation extends Node {
 			}
 		}
 	}
+
+	private Double getMaxDistance() {
+
+		double max = 0;
+		for (double d : distances) {
+			if (d > max) {
+				max = d;
+			}
+		}
+		return max;
+	}
+
+	private Double getAverageDistance() {
+
+		double sum = 0;
+		int len = distances.size();
+		for (double d : distances) {
+			sum = sum + d;
+		}
+		return sum / len;
+	}
+
+	private Double getMedianDistance() {
+
+		int len = distances.size();
+		Collections.sort(distances);
+		if (len % 2 == 1) {
+			return distances.get(len / 2);
+		} else {
+			return (distances.get(len / 2 - 1) + distances.get(len / 2)) / 2;
+		}
+	}
+
+	private Double getThirdtileDistance() {
+
+		int len = distances.size();
+		Collections.sort(distances);
+
+		return distances.get(len / 3);
+
+	}
+
 }

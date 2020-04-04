@@ -1,5 +1,3 @@
-package wrsn;
-
 import io.jbotsim.core.Color;
 import io.jbotsim.core.Message;
 import io.jbotsim.core.Node;
@@ -9,17 +7,12 @@ public class Sensor extends Node {
 	int numChildren = -1;
 	boolean pret = false;
 	int battery = 255;
-	int nbEnvoie = 0;
-	int idNbSuccesseur = 0;
+	int nbEnvoieBatterieFaible = 0;
+	int nbSuccesseurs = 0;
 	int nombreEnfantVisite = 0;
 	int envoie = 0;
-	int idZone = 1;
-	int difference = 0;
-	int nbenfvisi = 0;
-	Node meilleurNoeud;
-	int diffdeb;
-	public int passage = 0;
-	long TempsDep = System.currentTimeMillis();
+	int nbNoeudsTotal;
+	int maxNoeudSuccesseur;
 
 	@Override
 	public void onMessage(Message message) {
@@ -27,63 +20,39 @@ public class Sensor extends Node {
 		// "INIT" flag : construction of the spanning tree
 		// "SENSING" flag : transmission of the sensed values
 		// You can use other flags for your algorithms
-		if (message.getFlag().equals("idZone")) {
-			idZone = 0;
+
+		if (message.getFlag().equals("location")) {
+			send(parent, new Message(message.getContent(), "location"));
+		}
+		if (message.getFlag().equals("infoNbNoeudsMaxNoeudSucc")) {
+			nbNoeudsTotal = ((MemoireMaxNbNoeud) message.getContent()).getNbNoeuds();
+			maxNoeudSuccesseur = ((MemoireMaxNbNoeud) message.getContent()).getMaxNoeudSuccesseur();
 			for (Node n : this.getNeighbors()) {
 				if (n instanceof Sensor && ((Sensor) n).parent.equals(this)) {
-					send(n, new Message(0, "idZone"));
+					send(n, new Message(new MemoireMaxNbNoeud(nbNoeudsTotal, maxNoeudSuccesseur),
+							"infoNbNoeudsMaxNoeudSucc"));
 				}
 			}
 		}
-		if (message.getFlag().equals("numRobottoChildren")) {
-			send(parent, new Message(idNbSuccesseur, "numRobotFromChildren"));
-		}
-		if (message.getFlag().equals("numRobotAprendretoEnfant")) {
-			difference = (int) message.getContent();
-			diffdeb = difference;
-			for (Node n : this.getNeighbors()) {
 
-				if (n instanceof Sensor && ((Sensor) n).parent.equals(this)) {
-					send(n, new Message(difference, "numRobottoChildren"));
-				}
-			}
-		}
-		if (message.getFlag().equals("numRobotFromChildren")) {
-			nbenfvisi++;
-			if (0 < (int) message.getContent() - 15 && (int) message.getContent() - 15 < difference) {
-				difference = (int) message.getContent() - 15;
-				meilleurNoeud = message.getSender();
-			} else {
-
-			}
-			if (numChildren == nbenfvisi && diffdeb != difference) {
-				send(meilleurNoeud, new Message(difference, "numRobotAprendretoEnfant"));
-			} else if (numChildren == nbenfvisi && diffdeb == difference) {
-				idZone = 0;
-				for (Node n : this.getNeighbors()) {
-					if (n instanceof Sensor && ((Sensor) n).parent.equals(this)) {
-						send(n, new Message(0, "idZone"));
-					}
-				}
-			}
-		}
 		if (message.getFlag().equals("INIT")) {
 			// if not yet in the tree
 			if (parent == null) {
 				// enter the tree
 				parent = message.getSender();
+				send(parent, new Message(this.getLocation(), "location"));
 				getCommonLinkWith(parent).setWidth(4);
 				// propagate further
 				sendAll(message);
 			} else if (envoie == 0) {
 				pret = true;
 			}
-		} else if (message.getFlag().equals("idNbSuccesseur")) {
-			idNbSuccesseur += (int) message.getContent();
+		} else if (message.getFlag().equals("nbSuccesseurs")) {
+			nbSuccesseurs += (int) message.getContent();
 			nombreEnfantVisite++;
 			if (nombreEnfantVisite == numChildren) {
-				idNbSuccesseur++;
-				send(parent, new Message(idNbSuccesseur, "idNbSuccesseur"));
+				nbSuccesseurs++;
+				send(parent, new Message(nbSuccesseurs, "nbSuccesseurs"));
 			}
 		} else if (message.getFlag().equals("SENSING")) {
 			// retransmit up the tree
@@ -106,14 +75,12 @@ public class Sensor extends Node {
 
 	@Override
 	public void onClock() {
-		if (nbEnvoie != 0 && battery > 250) {
-			nbEnvoie = 0;
+		if (nbEnvoieBatterieFaible != 0 && battery > 250) {
+			nbEnvoieBatterieFaible = 0;
 		}
-		// this.setLabel(idNbSuccesseur + " " + idZone);
-		if (pret && idNbSuccesseur == 0) {
+		if (pret && nbSuccesseurs == 0) { // calcul nombre d'enfants
 			numChildren = 0;
 			for (Node n : this.getNeighbors()) {
-
 				if (n instanceof BaseStation) {
 
 				} else if (((Sensor) n).parent == null) {
@@ -126,18 +93,18 @@ public class Sensor extends Node {
 		}
 		if (pret && numChildren == 0) {
 			pret = false;
-			idNbSuccesseur = 1;
+			nbSuccesseurs = 1;
 			envoie++;
-			send(parent, new Message(idNbSuccesseur, "idNbSuccesseur"));
+			send(parent, new Message(nbSuccesseurs, "nbSuccesseurs"));
 		}
 
 		if (parent != null) { // if already in the tree
-			// System.out.println(TempsDep * 1.0 / System.currentTimeMillis());
-			if (nbEnvoie == 0 && battery < 80 + 150. * (-1.58 * (1. - Math.pow(1. * idNbSuccesseur, 1.0 / 6)))) {
-				send(parent, new Message(
-						new MemoireBattery(this.getLocation(), System.currentTimeMillis(), idZone, idNbSuccesseur),
-						"mem"));
-				nbEnvoie++;
+			if (nbSuccesseurs != 0 && maxNoeudSuccesseur != 0) {
+				if (nbEnvoieBatterieFaible == 0 && battery < 120
+						+ 100. * (1. - Math.exp(-5. * (nbSuccesseurs - 1) / (maxNoeudSuccesseur - 1)))) {
+					send(parent, new Message(this.getLocation(), "mem"));
+					nbEnvoieBatterieFaible++;
+				}
 			}
 			if (Math.random() < 0.02) { // from time to time...
 				double sensedValue = Math.random(); // sense a value

@@ -1,5 +1,3 @@
-package wrsn;
-
 import io.jbotsim.core.LinkResolver;
 import io.jbotsim.core.Node;
 import io.jbotsim.core.Topology;
@@ -29,12 +27,11 @@ public class Main {
 		tp.getSerializer().importFromString(tp, data);
 
 		// Add base station
-		BaseStation b = new BaseStation();
-		tp.addNode(100, 80, b);
+		tp.addNode(100, 80, new BaseStation());
 
 		// Add two robots
-		tp.addNode(90, 40, new Robot(b, 0));
-		tp.addNode(60, 80, new Robot(b, 1));
+		tp.addNode(90, 40, new Robot());
+		tp.addNode(60, 80, new Robot());
 
 		new JViewer(tp);
 		tp.start();
