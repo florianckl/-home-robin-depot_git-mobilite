@@ -110,7 +110,7 @@ public class Sensor extends Node {
 
 	@Override
 	public void onClock() {
-		if (nbEnvoieBatterieFaible != 0 && battery > 250) {
+		if (nbEnvoieBatterieFaible != 0 && battery > 252 ) {
 			nbEnvoieBatterieFaible = 0;
 		}
 		this.setLabel(idNbSuccesseur + " " + idZone);
@@ -137,7 +137,7 @@ public class Sensor extends Node {
 		if (parent != null) { // if already in the tree
 			// System.out.println(TempsDep * 1.0 / System.currentTimeMillis());
 			if (idNbSuccesseur != 0 && maxNoeudSuccesseur != 0) {
-				if (nbEnvoieBatterieFaible == 0 && battery < 50 + 200. * (1. - Math.exp(-7. * (idNbSuccesseur - 1) / (maxNoeudSuccesseur - 1)))) {
+				if (nbEnvoieBatterieFaible == 0 && battery < 40 + 203. * (1. - Math.exp(-6. * (idNbSuccesseur - 1) / (maxNoeudSuccesseur - 1)))) {
 					send(parent, new Message(
 							new MemoireBattery(this.getLocation(), System.currentTimeMillis(), idZone, idNbSuccesseur),
 							"mem"));

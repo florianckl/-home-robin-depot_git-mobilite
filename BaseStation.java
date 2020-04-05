@@ -123,6 +123,7 @@ public class BaseStation extends Node {
 				}
 			}
 			System.out.println(rechageTotal);
+			return;
 		}
 		if (pret && locationsReceived == nbNoeudsTotaux) {
 			max = getMaxDistance();
@@ -163,21 +164,6 @@ public class BaseStation extends Node {
 			}
 		}
 
-		if (stop) {
-			double rechageTotal = 0;
-			for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
-				if (n instanceof Robot) {
-					if (this.getCommonLinkWith(n) != null) {
-						rechageTotal += ((Robot) n).recharge / (255. * nbNoeudsTotaux);
-
-					}
-				}
-
-			}
-
-			System.out.println(rechageTotal);
-
-		}
 	}
 
 	private Double getMaxDistance(){
