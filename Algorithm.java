@@ -36,7 +36,7 @@ public class Algorithm {
 		for (int i = 0; i < listePoint.size(); i++) {
 			double distance = p.distance(listePoint.get(i).getPt());
 			int nbSucc = listePoint.get(i).getSuccesseur();
-			double distancePond = distance / (nbSucc * nbSucc);
+			double distancePond = distance + nbSucc * 100;
 			// (System.currentTimeMillis() - listePoint.get(i).getTime());
 			if (distancePond < distanceMin) {
 				distanceMin = distancePond;

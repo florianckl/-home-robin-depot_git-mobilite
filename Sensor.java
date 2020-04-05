@@ -137,8 +137,7 @@ public class Sensor extends Node {
 		if (parent != null) { // if already in the tree
 			// System.out.println(TempsDep * 1.0 / System.currentTimeMillis());
 			if (idNbSuccesseur != 0 && maxNoeudSuccesseur != 0) {
-				if (nbEnvoieBatterieFaible == 0 && battery < 120
-						+ 100. * (1. - Math.exp(-5. * (idNbSuccesseur - 1) / (maxNoeudSuccesseur - 1)))) {
+				if (nbEnvoieBatterieFaible == 0 && battery < 50 + 200. * (1. - Math.exp(-7. * (idNbSuccesseur - 1) / (maxNoeudSuccesseur - 1)))) {
 					send(parent, new Message(
 							new MemoireBattery(this.getLocation(), System.currentTimeMillis(), idZone, idNbSuccesseur),
 							"mem"));

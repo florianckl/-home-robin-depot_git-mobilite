@@ -113,6 +113,17 @@ public class BaseStation extends Node {
 	@Override
 	public void onClock() {
 
+		if (stop) {
+			double rechageTotal = 0;
+			for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
+				if (n instanceof Robot) {
+					if (this.getCommonLinkWith(n) != null) {
+						rechageTotal += ((Robot) n).recharge / (255. * nbNoeudsTotaux);
+					}
+				}
+			}
+			System.out.println(rechageTotal);
+		}
 		if (pret && locationsReceived == nbNoeudsTotaux) {
 			max = getMaxDistance();
 			average = getAverageDistance();
@@ -151,8 +162,8 @@ public class BaseStation extends Node {
 				}
 			}
 		}
-		if (stop) {
 
+		if (stop) {
 			double rechageTotal = 0;
 			for (Node n : getNeighbors()) {// transmettre les itineraires aux robots
 				if (n instanceof Robot) {
@@ -162,12 +173,9 @@ public class BaseStation extends Node {
 					}
 				}
 
-				// System.out.println((System.currentTimeMillis() - tempsDep) / 1000);
-				System.out.println(rechageTotal);
-				System.exit(0);
-
 			}
 
+			System.out.println(rechageTotal);
 
 		}
 	}
@@ -219,7 +227,7 @@ public class BaseStation extends Node {
 		int len = distances.size();
 		Collections.sort(distances);
 
-		return distances.get(len / 4 - 1);
+		return distances.get(len / 4);
 
 	}
 
