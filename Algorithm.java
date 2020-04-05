@@ -31,7 +31,7 @@ public class Algorithm {
 	}
 
 	private int indexprocheVoisins(Point p, List<Point> listePoint) {
-		double distanceMin = 1000;
+		double distanceMin = Double.POSITIVE_INFINITY;
 		int procheVoisin = 0;
 		for (int i = 0; i < listePoint.size(); i++) {
 			double distance = p.distance(listePoint.get(i));

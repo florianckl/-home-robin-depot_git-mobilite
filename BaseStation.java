@@ -91,7 +91,7 @@ public class BaseStation extends Node {
 
 		if (message.getFlag().equals("mem")) {
 			Point memSensor = (Point) message.getContent();
-			if (memSensor.distance(this.getLocation()) < getMaxDistance() / 3) {
+			if (memSensor.distance(this.getLocation()) < max / 3.) {
 				destinations0.add((Point) message.getContent());
 			} else {
 				destinations1.add((Point) message.getContent());

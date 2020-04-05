@@ -26,7 +26,7 @@ public class Robot extends WaypointNode {
 	@Override
 	public void onStart() {
 		setSensingRange(30);
-		setIcon(Icons.DRONE);
+		setIcon(Icons.ROBOT);
 		setIconSize(29);
 	}
 

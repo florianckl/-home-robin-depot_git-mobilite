@@ -81,7 +81,7 @@ public class Sensor extends Node {
 
 	@Override
 	public void onClock() {
-		if (nbEnvoieBatterieFaible != 0 && battery > 250) {
+		if (nbEnvoieBatterieFaible != 0 && battery > 252) {
 			nbEnvoieBatterieFaible = 0;
 		}
 		if (pret && nbSuccesseurs == 0) { // calcul nombre d'enfants
@@ -106,8 +106,8 @@ public class Sensor extends Node {
 
 		if (parent != null) { // if already in the tree
 			if (nbSuccesseurs != 0 && maxNoeudSuccesseur != 0) {
-				if (nbEnvoieBatterieFaible == 0 && battery < 120
-						+ 100. * (1. - Math.exp(-5. * (nbSuccesseurs - 1) / (maxNoeudSuccesseur - 1)))) {
+				if (nbEnvoieBatterieFaible == 0
+						&& battery < 30 + 210. * (1. - Math.exp(-5. * nbSuccesseurs / maxNoeudSuccesseur))) {
 					send(parent, new Message(this.getLocation(), "mem"));
 					nbEnvoieBatterieFaible++;
 				}
@@ -121,7 +121,7 @@ public class Sensor extends Node {
 
 	protected void updateColor() {
 		if (battery <= 0) {
-			super.send(parent, new Message("", "ERREUR"));
+			super.send(parent, new Message("", "ERREUR"));// on envoie l'erreur à la base
 		}
 		setColor(battery == 0 ? Color.red : new Color(255 - battery, 255 - battery, 255));
 	}

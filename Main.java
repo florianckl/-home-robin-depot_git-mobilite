@@ -1,7 +1,6 @@
 import io.jbotsim.core.LinkResolver;
 import io.jbotsim.core.Node;
 import io.jbotsim.core.Topology;
-import io.jbotsim.ui.JViewer;
 
 public class Main {
 	public static void main(String[] args) {
@@ -33,7 +32,7 @@ public class Main {
 		tp.addNode(90, 40, new Robot());
 		tp.addNode(60, 80, new Robot());
 
-		new JViewer(tp);
+		// new JViewer(tp);
 		tp.start();
 	}
 }
